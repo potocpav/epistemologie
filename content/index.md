@@ -12,7 +12,7 @@ Tyto stránky obsahují načrtnutí témat z epistemologie, která by měla být
 Následuje seznam různých témat, na která jsem si vzpomněl. Některá témata jsou již zpracována.
 
 
-### [O Epistemologii](01-o-epistemologii.md)
+### [O epistemologii](01-o-epistemologii.md)
 
 - [x] správná metoda není přirozená
 - [x] analogie k jízdě na kole
