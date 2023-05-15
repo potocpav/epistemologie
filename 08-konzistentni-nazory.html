@@ -22,14 +22,54 @@
     <meta name='generator' content='Emanote' />
 
   
-  <link href='tailwind.css?instanceId=cf51ba63-bd39-48f2-9d35-63270ab644a1' rel='stylesheet' type='text/css' />
+  <link href='tailwind.css?instanceId=196312b4-a0ae-443f-8bc4-a86b05af2191' rel='stylesheet' type='text/css' />
 
-  <!-- Heist error element -->
   <style>
+    /* Heist error element */
     strong.error {
       color: lightcoral;
       font-size: 90%;
       font-family: monospace;
+    }
+
+    /* External link icon */
+    a[data-linkicon=""]::after {
+      content: ""
+    }
+
+    a[data-linkicon=none]::after {
+      content: ""
+    }
+
+    a[data-linkicon="external"]::after {
+      content: url('data:image/svg+xml,\
+      <svg xmlns="http://www.w3.org/2000/svg" height="0.7em" viewBox="0 0 20 20"> \
+        <g style="stroke:gray;stroke-width:1"> \
+          <line x1="5" y1="5" x2="5" y2="14" /> \
+          <line x1="14" y1="9" x2="14" y2="14" /> \
+          <line x1="5" y1="14" x2="14" y2="14" /> \
+          <line x1="5" y1="5" x2="9" y2="5"  /> \
+          <line x1="10" y1="2" x2="17" y2="2"  /> \
+          <line x1="17" y1="2" x2="17" y2="9" /> \
+          <line x1="10" y1="9" x2="17" y2="2" style="stroke-width:1.0" /> \
+        </g> \
+      </svg>');
+    }
+
+    a[data-linkicon="external"][href^="mailto:"]::after {
+      content: url('data:image/svg+xml,\
+        <svg \
+          xmlns="http://www.w3.org/2000/svg" \
+          height="0.7em" \
+          fill="none" \
+          viewBox="0 0 24 24" \
+          stroke="gray" \
+          stroke-width="2"> \
+          <path \
+            stroke-linecap="round" \
+            stroke-linejoin="round" \
+            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> \
+        </svg>');
     }
   </style>
   <!-- What goes in this file will appear on near the end of <head>--><link rel='preload' href='_emanote-static/fonts/Work_Sans/WorkSans-VariableFont_wght.ttf' as='font' type='font/ttf' crossorigin />
@@ -98,11 +138,13 @@
 <script src='_emanote-static/stork/stork.js'></script>
 
   
-    <script data-emanote-base-url='/epistemologie/'>
+    <script id='emanote-stork' data-emanote-base-url='/epistemologie/'>
       window.emanote = {};
       window.emanote.stork = {
         searchShown: false,
+        indexIsStale: false,
         toggleSearch: function () {
+          window.emanote.stork.refreshIndex();
           document.getElementById('stork-search-container').classList.toggle('hidden');
           window.emanote.stork.searchShown = document.body.classList.toggle('stork-overflow-hidden-important');
           if (window.emanote.stork.searchShown) {
@@ -115,14 +157,25 @@
           window.emanote.stork.searchShown = false;
         },
 
-        init: function () {
+        getBaseUrl: function () {
+          const baseUrl = document.getElementById("emanote-stork").getAttribute('data-emanote-base-url') || '/';
+          return baseUrl;
+        },
+
+        registerIndex: function (options) {
           const indexName = 'emanote-search'; // used to match input[data-stork] attribute value
-          const baseUrl = document.currentScript.getAttribute('data-emanote-base-url') || '/';
-          const indexUrl = baseUrl + '-/stork.st';
+          const indexUrl = window.emanote.stork.getBaseUrl() + '-/stork.st';
+          stork.register(
+            indexName,
+            indexUrl,
+            options);
+        },
+
+        init: function () {
           if (document.readyState !== 'complete') {
             window.addEventListener('load', function () {
-              stork.initialize(baseUrl + '_emanote-static/stork/stork.wasm');
-              stork.register(indexName, indexUrl);
+              stork.initialize(window.emanote.stork.getBaseUrl() + '_emanote-static/stork/stork.wasm');
+              window.emanote.stork.registerIndex();
             });
 
             document.addEventListener('keydown', event => {
@@ -135,10 +188,32 @@
               }
             });
           } else {
-            // Override existing on Ema's hot-reload
-            stork.register(indexName, indexUrl, { forceOverwrite: true });
+            // This section is called during Ema's hot reload.
+            // 
+            // Mark the current index as stale, and refresh it *only when* the
+            // user actually invokes search.
+            // 
+            // We do not refresh the index *right away*, as that will cause
+            // memory leaks in the browser. See
+            // https://github.com/srid/emanote/issues/411#issuecomment-1402056235
+            console.log("stork: Marking index as stale");
+            window.emanote.stork.markIndexAsStale();
+          }
+        },
+
+        markIndexAsStale: function () {
+          window.emanote.stork.indexIsStale = true;
+        },
+
+        refreshIndex: function () {
+          if (window.emanote.stork.indexIsStale) {
+            console.log("stork: Reloading index");
+            window.emanote.stork.indexIsStale = false;
+            // NOTE: This will leak memory. See the comment above.
+            window.emanote.stork.registerIndex({ forceOverwrite: true });
           }
         }
+
       };
 
       window.emanote.stork.init();
@@ -698,6 +773,7 @@
       <strong>Změna klimatu</strong>
     </p>
   <table class='mb-3'><thead><tr class='border-b-2 border-t-2 border-gray-300'><th class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Je způsobená člověkem</th><th class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Není způsobená člověkem</th></tr></thead><tbody><tr class='border-b-2 border-t-2 border-gray-300'><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Naprostá většina vědců zabývajících se klimatem se shoduje v názoru, že ano.</td><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Tlak proti publikaci nepopulárních názorů způsobuje, že vědci kteří jdou proti proudu jsou potlačeni.</td></tr><tr class='border-b-2 border-t-2 border-gray-300'><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Lidé stojí za zvýšenou koncentrací CO₂ v atmosféře, což způsobuje oteplování.</td><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Zvyšování koncentrace CO₂ nezpůsobuje oteplování, ale je způsobeno oteplováním. V historii Země byly doby ledové s 5x větší koncentrací CO₂ než je teď.</td></tr><tr class='border-b-2 border-t-2 border-gray-300'><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Rychlost oteplování je bezprecedentní.</td><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Země se vždy oteplovala a ochlazovala. Fluktuace jsou normální.</td></tr><tr class='border-b-2 border-t-2 border-gray-300'><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Změny ve sluneční aktivitě nemohou vysvětlit současné oteplování.</td><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Změny ve sluneční aktivitě jsou primární příčinou současného oteplování.</td></tr><tr class='border-b-2 border-t-2 border-gray-300'><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Ledovce rychle tají kvůli globálnímu oteplování.</td><td class='py-2 px-2 align-top border-r-2 border-l-2 border-gray-300'>Cykly tání a růstu ledovců existují tisíce let, a dějí se z přirozených příčin nezávisle na činnosti člověka.</td></tr></tbody></table><h2 id='konfirmační-zkreslení' class='inline-block mt-6 mb-4 text-4xl font-bold text-gray-700 border-b-2'>Konfirmační zkreslení</h2>
+
   <div class='flex items-center justify-center mt-2'>
   
     
@@ -763,7 +839,7 @@
     </a>
   </div>
   <div>
-    <a href='https://emanote.srid.ca' target='_blank' title='Generated by Emanote 0.7.16.1'>
+    <a href='https://emanote.srid.ca' target='_blank' title='Generated by Emanote 1.0.3.5'>
       <img class='w-6 h-6 hover:text-blue-700' src='_emanote-static/emanote-logo.svg' />
     </a>
   </div>
@@ -795,6 +871,9 @@
     </div>
   </div>
 </div>
+  
+    
+  
 </body>
 
 </html>
